@@ -41,7 +41,7 @@ class Combined(unittest.TestCase):
             self.assertEqual(set(report["reports"]), {"local-chat-v1", "serving-v1"})
             self.assertTrue(all(child["complete"] for child in report["reports"].values()))
             self.assertEqual(list(Path(directory).iterdir()), [path])
-            self.assertIn("Historical protocol values", markdown(report))
+            self.assertIn("Historical protocol values", markdown(report, layout="detailed"))
             self.assertIn("Agent conversation cache", markdown(report))
             self.assertNotIn("test-secret", path.read_text())
             self.assertEqual(set(compare(report, deepcopy(report))["suites"]), {"local-chat-v1", "serving-v1"})

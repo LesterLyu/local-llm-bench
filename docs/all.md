@@ -41,7 +41,15 @@ On an error or interruption, completed original results and any partial extensio
 results remain embedded in the incomplete combined JSON. Temporary staging files
 are removed after embedding. Existing output reports are never overwritten.
 
-`report INPUT.json --output SHARE.md` renders both suites. `compare OLD NEW`
+Successful runs automatically write a sibling Markdown report (e.g. `run.json`
+and `run.md`). The default compact layout merges both suites into one table,
+retains all repetitions, uses means for original tests and medians for streaming
+tests, and includes TTFT, weighted draft acceptance, cache statistics and separate
+calibration rows. Unknown metrics stay unavailable. `--lang zh` selects Chinese;
+`--layout detailed` selects the earlier English layout. Existing Markdown files
+are checked before any inference request and are never overwritten.
+
+`report INPUT.json --output SHARE.md` renders the same report offline. `compare OLD NEW`
 compares combined reports in separate tables, preserving original means/round 2
 and streaming medians. A combined report can also be compared with a single-suite
 or original Windows legacy report: only the matching child is selected and the

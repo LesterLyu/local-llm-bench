@@ -13,6 +13,9 @@ requests naturally warm prompt, kernel and expert caches.
 The default **runs everything**: original Windows `local-chat-v1` tests, then
 streaming and conversation-cache `serving-v1` tests, including 32K input.
 The combined report is versioned as `all-v1`; each original protocol remains intact.
+Successful runs automatically save JSON plus a Markdown report with one combined
+table: every repetition, the original means/streaming medians, client TTFT,
+weighted draft acceptance, agent-cache statistics and explicit calibration rows.
 
 ## Install
 
@@ -37,6 +40,12 @@ local-llm-bench run --base-url http://127.0.0.1:18234 --label strata-build-A
 `python -m local_llm_bench` is equivalent if the console command is not on PATH.
 An optional trailing `/v1` on the URL is accepted. Model aliases are discovered
 from `/v1/status`; override with `--model NAME` if necessary.
+
+With `--output results/build-A.json`, the automatic report is
+`results/build-A.md`. Neither file is overwritten; an existing Markdown report
+is detected before sending any benchmark request. Use `--lang zh` for Chinese
+table labels, or `--layout detailed` for the earlier English report with ranges
+and token counts. Presentation options do not change either request protocol.
 
 The default starts with **two rounds** of `conv → struct → prose → pp16k`, then
 two consecutive `code` requests, followed by the complete streaming/agent suite
@@ -157,6 +166,19 @@ streaming metrics are never mixed.
 legacy Windows results. Markdown excludes endpoint, raw status, requests,
 responses, free-form notes and local paths. Review model/label fields before
 sharing. JSON retains diagnostic detail and should be reviewed before publication.
+
+```sh
+# Regenerate the compact table from saved measurements, with no inference calls
+local-llm-bench report results/build-A.json --lang zh --output results/build-A-zh.md
+# Keep the detailed English layout when inspecting token counts and ranges
+local-llm-bench report results/build-A.json --layout detailed --output results/build-A-details.md
+```
+
+Compact report speeds are input tok/s for prefill/calibration, output tok/s
+otherwise. Original measurements use means; streaming and agent measurements use
+medians. TTFT is a median, and draft acceptance is total accepted / total offered.
+The counters can include MTP and suffix-lookup drafts. Calibration rows have no
+performance aggregate; missing engine measurements never become HTTP estimates.
 
 Use the same model, quantization, context, speculation settings, expert tiers,
 GPU roles and power limits. Record build labels and server options in `--notes`.

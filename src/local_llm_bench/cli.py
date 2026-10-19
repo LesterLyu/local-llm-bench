@@ -35,6 +35,8 @@ def main(argv=None):
     bench.add_argument("--label", default="", help="build/commit label for this run")
     bench.add_argument("--notes", default="", help="model quantization, server options, GPU text/vision roles, etc.")
     bench.add_argument("--dry-run", action="store_true", help="print the request plan without network or hardware access")
+    bench.add_argument("--layout", choices=("compact", "detailed"), default="compact", help="automatic Markdown report layout")
+    bench.add_argument("--lang", choices=("en", "zh"), default="en", help="compact report language (detailed is English)")
     diff = commands.add_parser("compare", help="compare two completed reports, including original Windows reports")
     diff.add_argument("old")
     diff.add_argument("new")
@@ -42,15 +44,19 @@ def main(argv=None):
     view = commands.add_parser("report", help="render a saved report as shareable Markdown, offline")
     view.add_argument("input")
     view.add_argument("--output", type=Path, help="new Markdown file; otherwise print to stdout")
+    view.add_argument("--layout", choices=("compact", "detailed"), default="compact")
+    view.add_argument("--lang", choices=("en", "zh"), default="en", help="compact report language (detailed is English)")
     args = parser.parse_args(argv)
     try:
+        if args.command in ("run", "report") and args.layout == "detailed" and args.lang != "en":
+            raise BenchError("the detailed report is English; use --layout compact with --lang zh")
         if args.command == "report":
             report = load(args.input)
             if args.output:
-                write_markdown(args.output, report)
+                write_markdown(args.output, report, layout=args.layout, language=args.lang)
                 print("Report: " + str(args.output.resolve()))
             else:
-                print(markdown(report))
+                print(markdown(report, layout=args.layout, language=args.lang))
             return 0
         if args.command == "compare":
             result = compare(load(args.old), load(args.new))
@@ -93,27 +99,22 @@ def main(argv=None):
                                             "reference_prompt_tokens": c.reference_prompt_tokens} for c in plan(args.rounds)]}, indent=2))
             return 0
         output = args.output or Path("results") / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + ".json")
+        report_path = output.with_suffix(".md") if output.suffix.lower() == ".json" else Path(str(output) + ".md")
+        if report_path.exists():
+            raise BenchError(f"Markdown report already exists: {report_path}")
         client = Client(args.base_url, os.environ.get(args.api_key_env, ""), args.timeout)
         options = dict(rounds=args.rounds, model=args.model, hardware=not args.no_hardware, label=args.label, notes=args.notes,
                        progress=lambda line: print(line, flush=True))
         if all_tests:
             report = combined.run(client, output, engine_log=args.engine_log, strict_tokens=args.strict_tokens, **options)
-            print(markdown(report))
-            print("Results: " + str(output.resolve()))
-            return 0
-        if extended:
+        elif extended:
             report = serving.run(client, output, long=args.long, **options)
-            print(markdown(report))
-            print("Results: " + str(output.resolve()))
-            return 0
-        report = run(client, output, engine_log=args.engine_log, strict_tokens=args.strict_tokens, **options)
-        print("\nSummary (engine tok/s; pp16k = input, others = output):")
-        for name, value in report["summary"].items():
-            mean = value["mean"]
-            print(f"  {name}: {mean:.1f}" if mean is not None else f"  {name}: unavailable (HTTP throughput is stored separately)")
-        for warning in report["warnings"]:
-            print("Note: " + warning)
+        else:
+            report = run(client, output, engine_log=args.engine_log, strict_tokens=args.strict_tokens, **options)
+        write_markdown(report_path, report, layout=args.layout, language=args.lang)
+        print(markdown(report, layout=args.layout, language=args.lang))
         print("Results: " + str(output.resolve()))
+        print("Report: " + str(report_path.resolve()))
         return 0
     except KeyboardInterrupt:
         print("Interrupted; partial results were retained.", file=sys.stderr)

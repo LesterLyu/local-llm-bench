@@ -19,6 +19,12 @@ local-llm-bench run --base-url http://127.0.0.1:18234 --label strata-build-A
 两种服务使用相同的提示、采样参数和顺序；模型别名从服务自动读取。
 工具不会启动、关闭、卸载模型，也不会修改服务配置。
 
+测速成功后自动保存 JSON 和同名 `.md` 报告。例如 `--output results/build-A.json`
+会同时生成 `results/build-A.md`。报告默认把全部测试整合成一张表，包含每轮速度、
+原测试均值、扩展测试中位数、首 token 延迟、草稿接受率和 Agent 缓存指标。
+加 `--lang zh` 使用中文标签；加 `--layout detailed` 可查看原来的英文详细布局。
+这两个选项只影响报告，不改变测试请求。
+
 **默认就是全部跑**，顺序为：
 
 1. 第一轮：聊天 → 固定 JSON → 散文 → 16K 输入。
@@ -38,6 +44,16 @@ top_p=0.95、top_k=20，其余参数和原脚本一致。
 local-llm-bench run --base-url http://127.0.0.1:18235 --output results/build-A.json --label build-A --notes "NVFP4; 5090 text; 5060 Ti vision; spec=7; KV=int8"
 local-llm-bench compare results/build-A.json results/build-B.json
 ```
+
+已有 JSON 可以离线生成同样的表格，无需重新调用模型：
+
+```powershell
+local-llm-bench report results/build-A.json --lang zh --output results/build-A-zh.md
+```
+
+草稿接受率按接受总数 / 提供总数加权，可能包括 MTP 和后缀匹配草稿。
+缺失的引擎速度保持空值，校准只列单次结果、不计性能汇总。
+报告文件不覆盖；若同名 Markdown 已存在，会在发出测速请求前报错。
 
 需要 API key 时设置环境变量 `LOCAL_LLM_BENCH_API_KEY`，或用
 `--api-key-env NAME` 指定其他变量；密钥不会写入报告。
