@@ -59,6 +59,14 @@ def measured(answer, wall_s, log_text=None):
             raise BenchError(f"invalid engine timing {key}: {value!r}")
     if row["read_tokens"] is None and row["cached_tokens"] is not None:
         row["read_tokens"] = max(0, prompt - int(row["cached_tokens"]))
+    offered, accepted = timing.get("draft_n"), timing.get("draft_n_accepted")
+    for value in (offered, accepted):
+        if value is not None and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
+            raise BenchError("invalid engine draft count")
+    if offered is not None and accepted is not None and accepted > offered:
+        raise BenchError("accepted drafts exceed offered drafts")
+    row.update(drafts_offered=offered, drafts_accepted=accepted,
+               acceptance_pct=100 * accepted / offered if offered and accepted is not None else None)
     return row
 
 
@@ -71,6 +79,8 @@ def summarize(rows):
         present = [value for value in values if value is not None]
         full = bool(group) and len(present) == len(group)
         result[name] = {"metric": key, "values": values, "mean": statistics.mean(present) if full else None,
+                        "median": statistics.median(present) if full else None,
+                        "min": min(present) if full else None, "max": max(present) if full else None,
                         "stddev": statistics.stdev(present) if full and len(present) > 1 else None,
                         "second_round": values[1] if len(values) > 1 else None,
                         "all_engine_timings_present": full}

@@ -2,6 +2,8 @@
 
 - Preserve `local-chat-v1`: prompts, sampling, limits, nonce policy, no hidden
   warmup, and the fixed two-round sequence. Protocol changes require a new ID.
+- Default `all-v1` runs the original suite first, then three streaming repetitions
+  including 32K. Keep each sub-suite's protocol identity and report intact.
 - Support both Basalt and Strata over their existing APIs. Never start, stop,
   unload or reconfigure a user's inference service during a benchmark.
 - Never substitute HTTP throughput for missing engine decode/prefill rates.

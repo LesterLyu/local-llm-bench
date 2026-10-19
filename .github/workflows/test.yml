@@ -17,3 +17,5 @@ jobs:
       - run: python -m pip install .
       - run: python -m unittest discover -s tests -v
       - run: local-llm-bench run --dry-run
+      - run: local-llm-bench run --suite local-chat-v1 --dry-run
+      - run: local-llm-bench run --suite serving-v1 --dry-run

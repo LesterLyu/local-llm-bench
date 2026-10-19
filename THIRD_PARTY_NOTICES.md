@@ -1,4 +1,13 @@
-# Fixture attribution
+# Fixture and benchmark attribution
+
+The optional `serving-v1` workload adapts streaming measurements, short prompts,
+the seed-7 word-list generator, agent system/tool definitions and cache metrics
+from [Niko1221/Strata](https://github.com/Niko1221/Strata), commit
+`296b59d2f73c8f04a805df29c2fa97655adace78`, files `tools/strata_bench.py`,
+`tools/ab_engine.py` and `tools/agent_turns_bench.py`. The implementation has been
+adapted for this project's versioned API-only protocol; it is not the upstream
+suite or a claim of identical benchmark results. The upstream MIT notice below
+also applies to those adapted portions.
 
 The conv, struct, prose and prefill prompts were decoded from `data/bench/*.ids`
 in [jesdga95/basalt](https://github.com/jesdga95/basalt), commit

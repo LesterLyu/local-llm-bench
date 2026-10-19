@@ -34,7 +34,7 @@ class Protocol(unittest.TestCase):
         self.assertEqual(fingerprint, "98ccb4cdf60bf2d0bf36674b29d1984192199da1ae9d61949b389bb0b6acd156")
         output = io.StringIO()
         with redirect_stdout(output):
-            self.assertEqual(main(["run", "--dry-run"]), 0)
+            self.assertEqual(main(["run", "--suite", "local-chat-v1", "--dry-run"]), 0)
         report = json.loads(output.getvalue())
         self.assertTrue(report["canonical_rounds"])
         self.assertEqual(len(report["requests"]), 10)
